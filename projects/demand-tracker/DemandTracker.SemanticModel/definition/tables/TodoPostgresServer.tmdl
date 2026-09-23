@@ -9,7 +9,7 @@ table TodoPostgresServer
 
 	partition TodoPostgresServer = m
 		mode: import
-		source = "localhost:5432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+		source = "localhost:55432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
 
 	changedProperty = IsHidden
 	annotation PBI_NavigationStepName = Navigation

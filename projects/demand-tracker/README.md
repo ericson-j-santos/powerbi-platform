@@ -13,9 +13,12 @@ O projeto abre por padrão em `Demo`, com dados demonstrativos versionados para 
 Para usar o TODO Global real:
 1. abra `DemandTracker.pbip`;
 2. em **Transformar dados > Gerenciar parâmetros**, altere `TodoSourceMode` para `Postgres`;
-3. informe `TodoPostgresServer` e `TodoPostgresDatabase`;
-4. configure as credenciais PostgreSQL no próprio Power BI/Fabric;
-5. atualize o modelo.
+3. mantenha `TodoPostgresServer=localhost:55432` no PC24x7 ou informe o endpoint autorizado do ambiente;
+4. informe `TodoPostgresDatabase` — no runtime DEV canônico, `todo_global_bus_dev`;
+5. configure as credenciais PostgreSQL no próprio Power BI/Fabric;
+6. atualize o modelo.
+
+No runtime PC24x7, a porta PostgreSQL destinada ao Power BI deve ser publicada **somente em loopback** (`127.0.0.1`), nunca em `0.0.0.0` ou interface de rede externa.
 
 Nenhum usuário, senha, token ou connection string com segredo é versionado.
 
@@ -30,3 +33,4 @@ Nenhum usuário, senha, token ou connection string com segredo é versionado.
 ## Validação
 
 O projeto recebe validação estrutural e E2E em Power BI Desktop real, vinculada ao SHA da PR.
+O modo `Postgres` só é considerado validado quando houver leitura real do TODO Global no mesmo ambiente, com credenciais mantidas fora do Git.
