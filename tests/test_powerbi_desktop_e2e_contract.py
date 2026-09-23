@@ -25,12 +25,18 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertIn("actions/upload-artifact@v4", text)
         self.assertNotIn("\\${{", text)
         self.assertIn("ref: ${{ env.TARGET_SHA }}", text)
+        self.assertIn("-Mode download", text)
+        self.assertIn("-Mode install", text)
+        self.assertIn("-Mode open", text)
 
     def test_script_uses_official_pinned_installer_and_real_pbip(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("https://download.microsoft.com/", text)
         self.assertIn('expectedVersionPrefix = "2.157.1354"', text)
         self.assertIn("ACCEPT_EULA=1", text)
+        self.assertIn('ValidateSet("download", "install", "open")', text)
+        self.assertIn("--max-time 240", text)
+        self.assertIn("Wait-Process -Id $install.Id -Timeout 240", text)
         self.assertIn("templates/pbip-starter/Starter.pbip", text)
         self.assertIn('Get-Process -Name "PBIDesktop"', text)
         self.assertIn('Get-Process -Name "msmdsrv"', text)
