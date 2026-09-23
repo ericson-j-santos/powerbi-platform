@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: powerbi-desktop-e2e-\${{ github.ref }}
+  group: powerbi-desktop-e2e-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,14 +30,14 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 20
     env:
-      TARGET_SHA: \${{ github.event.pull_request.head.sha || github.sha }}
-      CORRELATION_ID: powerbi-desktop-e2e-\${{ github.run_id }}-\${{ github.run_attempt }}
+      TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CORRELATION_ID: powerbi-desktop-e2e-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout immutable target SHA
         uses: actions/checkout@v4
         with:
-          ref: \${{ env.TARGET_SHA }}
+          ref: ${{ env.TARGET_SHA }}
           fetch-depth: 1
 
       - name: Verify repository validator before Desktop
@@ -46,14 +46,14 @@ jobs:
 
       - name: Install Power BI Desktop and open PBIP
         shell: powershell
-        run: .\scripts\powerbi_desktop_e2e.ps1 -ExpectedSha "\${{ env.TARGET_SHA }}" -CorrelationId "\${{ env.CORRELATION_ID }}"
+        run: .\scripts\powerbi_desktop_e2e.ps1 -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
 
       - name: Upload sanitized E2E evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: powerbi-desktop-e2e-\${{ github.run_id }}
-          path: \${{ runner.temp }}/powerbi-desktop-e2e/evidence.json
+          name: powerbi-desktop-e2e-${{ github.run_id }}
+          path: ${{ runner.temp }}/powerbi-desktop-e2e/evidence.json
           if-no-files-found: error
           retention-days: 30
 
@@ -61,7 +61,7 @@ jobs:
         if: always()
         shell: powershell
         run: |
-          $path = Join-Path "\${{ runner.temp }}" "powerbi-desktop-e2e\evidence.json"
+          $path = Join-Path "${{ runner.temp }}" "powerbi-desktop-e2e\evidence.json"
           if (-not (Test-Path -LiteralPath $path)) {
             throw "E2E evidence file missing"
           }
