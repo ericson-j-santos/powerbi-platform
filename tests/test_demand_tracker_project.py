@@ -25,6 +25,11 @@ class DemandTrackerProjectTests(unittest.TestCase):
         for forbidden in ("password=","authorization:","bearer ","todo_gateway_token"):
             self.assertNotIn(forbidden,combined)
 
+    def test_live_postgres_default_uses_dedicated_loopback_port(self):
+        server=(MODEL/"definition"/"tables"/"TodoPostgresServer.tmdl").read_text(encoding="utf-8")
+        self.assertIn('source = "localhost:55432"',server)
+        self.assertNotIn("0.0.0.0",server)
+
     def test_measures_cover_operational_kpis(self):
         measures=(MODEL/"definition"/"tables"/"_Measures.tmdl").read_text(encoding="utf-8")
         for name in ("Total Demandas","P0","Em Andamento","Bloqueadas","Revalidar"):
