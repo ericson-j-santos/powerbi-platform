@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -11,9 +12,27 @@ JSON_SUFFIXES = {".json", ".pbip", ".pbir", ".pbism"}
 LOCAL_STATE_FILES = {
     "localsettings.json",
     "cache.abf",
-    "editorsettings.json",
-    "unappliedchanges.json",
 }
+
+
+def _git_tracked_files(root: Path) -> set[str] | None:
+    """Return Git-tracked paths, or None when Git state cannot be established."""
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+
+    return {
+        item.replace("\\", "/").casefold()
+        for item in completed.stdout.split("\0")
+        if item
+    }
 
 
 def _resolve_relative(
@@ -49,6 +68,7 @@ def validate(root: Path) -> list[str]:
     root = root.resolve()
     errors: list[str] = []
     payloads: dict[Path, object | None] = {}
+    tracked_files = _git_tracked_files(root)
 
     for path in root.rglob("*"):
         if not path.is_file():
@@ -57,11 +77,20 @@ def validate(root: Path) -> list[str]:
         relative = path.relative_to(root)
         lower_parts = [part.lower() for part in relative.parts]
 
-        if path.suffix.lower() in FORBIDDEN_SUFFIXES:
+        relative_key = relative.as_posix().casefold()
+        is_versioned = tracked_files is None or relative_key in tracked_files
+        is_local_state = ".pbi" in lower_parts and path.name.lower() in LOCAL_STATE_FILES
+
+        if path.suffix.lower() in FORBIDDEN_SUFFIXES and is_versioned:
             errors.append(f"arquivo binário Power BI não permitido: {relative}")
 
-        if ".pbi" in lower_parts and path.name.lower() in LOCAL_STATE_FILES:
-            errors.append(f"estado local do Power BI não pode ser versionado: {relative}")
+        if is_local_state:
+            if is_versioned:
+                errors.append(f"estado local do Power BI não pode ser versionado: {relative}")
+            else:
+                # Power BI Desktop legitimately creates these files locally.
+                # They are valid when ignored/untracked and must not poison validation.
+                continue
 
         if path.suffix.lower() in JSON_SUFFIXES:
             try:
