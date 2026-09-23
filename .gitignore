@@ -5,8 +5,6 @@
 # Local Power BI caches / user state
 **/.pbi/localSettings.json
 **/.pbi/cache.abf
-**/.pbi/editorSettings.json
-**/.pbi/unappliedChanges.json
 
 # Temporary files
 *.tmp
