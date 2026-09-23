@@ -4,10 +4,18 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "powerbi-desktop-e2e.yml"
+VALIDATE_WORKFLOW = ROOT / ".github" / "workflows" / "validate-powerbi.yml"
 SCRIPT = ROOT / "scripts" / "powerbi_desktop_e2e.ps1"
 
 
 class PowerBIDesktopE2EContractTests(unittest.TestCase):
+    def test_validate_workflow_checks_out_exact_target_sha(self):
+        text = VALIDATE_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("TARGET_SHA:", text)
+        self.assertIn("github.event.pull_request.head.sha || github.sha", text)
+        self.assertIn("ref: ${{ env.TARGET_SHA }}", text)
+        self.assertIn('test "$(git rev-parse HEAD)" = "$TARGET_SHA"', text)
+
     def test_workflow_uses_ephemeral_windows_without_reqsys_runner(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("runs-on: windows-2025", text)
