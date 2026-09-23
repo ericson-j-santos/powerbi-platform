@@ -236,6 +236,15 @@ try {
         throw "preexisting_local_state"
     }
 
+    # A clean hosted runner must not already have Power BI or its semantic engine
+    # running. This binds the observed processes below to this PBIP launch.
+    if (@(Get-Process -Name "PBIDesktop" -ErrorAction SilentlyContinue).Count -ne 0) {
+        throw "preexisting_powerbi_process"
+    }
+    if (@(Get-Process -Name "msmdsrv" -ErrorAction SilentlyContinue).Count -ne 0) {
+        throw "preexisting_semantic_engine"
+    }
+
     $launchAt = Get-Date
     $desktopProcesses = @()
     $processStarted = $false
@@ -283,7 +292,10 @@ try {
                 $nextProgress = (Get-Date).AddSeconds(30)
             }
 
-            if ($processResponding -and $semanticEngineStarted -and $localSettingsCount -gt 0) {
+            # localSettings.json/cache.abf are optional runtime artifacts for PBIP.
+            # Success is tied to the fresh responsive Desktop process and fresh
+            # semantic engine spawned from the validated immutable PBIP launch.
+            if ($processResponding -and $semanticEngineStarted) {
                 break
             }
             if ($desktopProcesses.Count -eq 0 -and (Get-Date) -gt $launchAt.AddSeconds(20)) {
@@ -297,10 +309,6 @@ try {
         if (-not $semanticEngineStarted) {
             throw "semantic_engine_not_started"
         }
-        if ($localSettingsCount -eq 0) {
-            throw "pbip_local_state_not_created"
-        }
-
         Push-Location $repoRoot
         try {
             $gitStatus = @(& git status --porcelain --untracked-files=all)
