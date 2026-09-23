@@ -69,6 +69,19 @@ class NewPowerBIProjectTests(unittest.TestCase):
                     with self.assertRaisesRegex(GenerationError, "invalid_project_name"):
                         generate_project(name, root / "out")
 
+    def test_rejects_reserved_windows_project_names_without_creating_destination(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("CON", "prn", "AUX", "nul", "COM1", "com9", "LPT1", "lpt9"):
+                with self.subTest(name=name):
+                    output = root / name
+                    with self.assertRaisesRegex(
+                        GenerationError,
+                        "reserved_windows_project_name",
+                    ):
+                        generate_project(name, output)
+                    self.assertFalse(output.exists())
+
     def test_does_not_copy_powerbi_local_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
