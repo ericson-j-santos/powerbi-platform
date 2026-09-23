@@ -1,0 +1,24 @@
+table _Measures
+
+	measure 'Total Demandas' = COUNTROWS(Demandas)
+		formatString: #,##0
+
+	measure P0 = CALCULATE([Total Demandas], Demandas[Prioridade] = "P0")
+		formatString: #,##0
+
+	measure 'Em Andamento' = CALCULATE([Total Demandas], Demandas[Estado] = "EM ANDAMENTO")
+		formatString: #,##0
+
+	measure Bloqueadas = CALCULATE([Total Demandas], Demandas[Estado] = "BLOQUEADO")
+		formatString: #,##0
+
+	measure Revalidar = CALCULATE([Total Demandas], FILTER(Demandas, Demandas[Estado] <> "CONCLUÍDO" && Demandas[Estado] <> "CANCELADO"))
+		formatString: #,##0
+
+	column Dummy
+		isHidden
+		sourceColumn: [Dummy]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW("Dummy", BLANK())

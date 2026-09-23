@@ -1,0 +1,3 @@
+database DemandTrackerModel
+	compatibilityLevel: 1702
+	compatibilityMode: powerBI

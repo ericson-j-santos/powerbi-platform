@@ -1,0 +1,16 @@
+table TodoSourceMode
+	isHidden
+
+	column TodoSourceMode
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: TodoSourceMode
+
+	partition TodoSourceMode = m
+		mode: import
+		source = "Demo" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+
+	changedProperty = IsHidden
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Text

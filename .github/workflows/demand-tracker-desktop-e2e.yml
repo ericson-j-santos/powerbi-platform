@@ -1,0 +1,81 @@
+name: Demand Tracker Power BI Desktop E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "projects/demand-tracker/**"
+      - "tests/test_demand_tracker_project.py"
+      - "scripts/powerbi_desktop_e2e.ps1"
+      - ".github/workflows/demand-tracker-desktop-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "projects/demand-tracker/**"
+      - "tests/test_demand_tracker_project.py"
+      - "scripts/powerbi_desktop_e2e.ps1"
+      - ".github/workflows/demand-tracker-desktop-e2e.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demand-tracker-powerbi-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-e2e:
+    name: Open DemandTracker PBIP in real Power BI Desktop
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CORRELATION_ID: demand-tracker-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout immutable target SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+      - name: Verify exact SHA and repository structure
+        shell: powershell
+        run: |
+          $actualSha = (git rev-parse HEAD).Trim()
+          if ($actualSha -ne "${{ env.TARGET_SHA }}") { throw "expected_sha_mismatch" }
+          python scripts/validate_powerbi_repo.py .
+      - name: Resolve DemandTracker project
+        shell: powershell
+        run: |
+          $project = Join-Path $env:GITHUB_WORKSPACE "projects\demand-tracker\DemandTracker.pbip"
+          if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw "DemandTracker.pbip missing" }
+          "DEMAND_TRACKER_PBIP=$project" | Add-Content $env:GITHUB_ENV
+      - name: Download pinned Power BI Desktop
+        shell: powershell
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode download -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:DEMAND_TRACKER_PBIP"
+      - name: Install pinned Power BI Desktop
+        shell: powershell
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode install -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:DEMAND_TRACKER_PBIP"
+      - name: Open DemandTracker in Power BI Desktop
+        shell: powershell
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode open -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:DEMAND_TRACKER_PBIP"
+      - name: Upload sanitized E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demand-tracker-powerbi-e2e-${{ github.run_id }}
+          path: ${{ runner.temp }}/powerbi-desktop-e2e/evidence.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish E2E summary
+        if: always()
+        shell: powershell
+        run: |
+          $path = Join-Path "${{ runner.temp }}" "powerbi-desktop-e2e\evidence.json"
+          if (-not (Test-Path -LiteralPath $path)) { throw "E2E evidence file missing" }
+          $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          "## Demand Tracker Power BI Desktop E2E" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "- Status: $($evidence.status)" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "- SHA: $($evidence.github_sha)" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "- Power BI: $($evidence.powerbi.installed_version)" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "- Semantic engine: $($evidence.powerbi.semantic_engine_started)" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "- Production touched: $($evidence.production_touched)" | Add-Content $env:GITHUB_STEP_SUMMARY
