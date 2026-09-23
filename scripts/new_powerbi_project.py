@@ -19,6 +19,14 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TEMPLATE = ROOT / "templates" / "pbip-starter"
 PROJECT_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 LOCAL_STATE_NAMES = {"localsettings.json", "cache.abf"}
+WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{index}" for index in range(1, 10)),
+    *(f"LPT{index}" for index in range(1, 10)),
+}
 
 
 class GenerationError(RuntimeError):
@@ -57,6 +65,8 @@ def _validate_project_name(name: str) -> None:
             "invalid_project_name: use 1-64 characters, starting with a letter, "
             "and only ASCII letters, digits, or underscore"
         )
+    if name.upper() in WINDOWS_RESERVED_NAMES:
+        raise GenerationError("reserved_windows_project_name")
 
 
 def _assert_template(template_root: Path) -> None:
