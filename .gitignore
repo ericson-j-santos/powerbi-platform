@@ -1,0 +1,36 @@
+# Power BI Desktop / PBIP
+*.pbix
+*.pbit
+
+# Local Power BI caches / user state
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+**/.pbi/unappliedChanges.json
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Python helpers
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node helpers
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
