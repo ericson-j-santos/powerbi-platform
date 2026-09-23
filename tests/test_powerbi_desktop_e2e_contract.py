@@ -48,8 +48,10 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
     def test_script_has_false_positive_controls(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("expected_sha_mismatch", text)
+        self.assertIn("preexisting_powerbi_process", text)
+        self.assertIn("preexisting_semantic_engine", text)
         self.assertIn("semantic_engine_not_started", text)
-        self.assertIn("pbip_local_state_not_created", text)
+        self.assertNotIn("pbip_local_state_not_created", text)
         self.assertIn("powerbi_open_mutated_source", text)
         self.assertIn("production_touched = $false", text)
         self.assertIn("secrets_read = $false", text)
