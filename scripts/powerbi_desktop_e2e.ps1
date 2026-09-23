@@ -5,7 +5,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ExpectedSha,
     [Parameter(Mandatory = $true)]
-    [string]$CorrelationId
+    [string]$CorrelationId,
+    [string]$ProjectFile = ""
 )
 
 Set-StrictMode -Version Latest
@@ -14,8 +15,20 @@ $ErrorActionPreference = "Stop"
 $installerUrl = "https://download.microsoft.com/download/8/8/0/880bca75-79dd-466a-927d-1abf1f5454b0/PBIDesktopSetup_x64.exe"
 $expectedVersionPrefix = "2.157.1354"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$projectRelative = "templates/pbip-starter/Starter.pbip"
-$projectPath = Join-Path $repoRoot $projectRelative
+$defaultProjectRelative = "templates/pbip-starter/Starter.pbip"
+$defaultProjectPath = Join-Path $repoRoot $defaultProjectRelative
+$projectPath = if ([string]::IsNullOrWhiteSpace($ProjectFile)) {
+    $defaultProjectPath
+}
+else {
+    [System.IO.Path]::GetFullPath($ProjectFile)
+}
+$projectEvidencePath = if ([string]::IsNullOrWhiteSpace($ProjectFile)) {
+    $defaultProjectRelative
+}
+else {
+    [System.IO.Path]::GetFileName($projectPath)
+}
 $evidenceDir = Join-Path $env:RUNNER_TEMP "powerbi-desktop-e2e"
 $evidencePath = Join-Path $evidenceDir "evidence.json"
 $statePath = Join-Path $evidenceDir "state.json"
@@ -73,7 +86,7 @@ function Write-Evidence(
             window_title_present = $WindowTitlePresent
         }
         project = [ordered]@{
-            path = $projectRelative
+            path = $projectEvidencePath
             local_settings_created_count = $LocalSettingsCount
             cache_abf_created_count = $CacheAbfCount
             repository_clean_after_open = $RepoCleanAfterOpen
@@ -92,7 +105,7 @@ function Assert-ImmutableCheckout {
             throw "expected_sha_mismatch"
         }
         if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf)) {
-            throw "starter_pbip_missing"
+            throw "project_pbip_missing"
         }
     }
     finally {
