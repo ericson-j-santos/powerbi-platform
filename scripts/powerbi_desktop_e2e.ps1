@@ -30,6 +30,8 @@ function Read-State {
     return [pscustomobject]@{
         installer_sha256 = $null
         installed_version = $null
+        installer_completion_mode = $null
+        installer_exit_code = $null
     }
 }
 
@@ -60,6 +62,8 @@ function Write-Evidence(
             source_host = "download.microsoft.com"
             expected_version_prefix = $expectedVersionPrefix
             observed_sha256 = $state.installer_sha256
+            completion_mode = $state.installer_completion_mode
+            exit_code = $state.installer_exit_code
         }
         powerbi = [ordered]@{
             installed_version = $state.installed_version
@@ -136,6 +140,7 @@ try {
             throw "installer_hash_changed"
         }
 
+        $installStartedAt = Get-Date
         $install = Start-Process -FilePath $installerPath -ArgumentList @(
             "-quiet",
             "-norestart",
@@ -144,16 +149,56 @@ try {
             "INSTALLDESKTOPSHORTCUT=0",
             "DISABLE_UPDATE_NOTIFICATION=1"
         ) -PassThru
-        try {
-            Wait-Process -Id $install.Id -Timeout 240 -ErrorAction Stop
-        }
-        catch {
+
+        $installDeadline = $installStartedAt.AddSeconds(480)
+        $stableExecutableSince = $null
+        $completionMode = $null
+        $installerExitCode = $null
+
+        do {
+            Start-Sleep -Seconds 5
+            $install.Refresh()
+
+            if ($install.HasExited) {
+                $installerExitCode = $install.ExitCode
+                if ($installerExitCode -notin @(0, 3010)) {
+                    throw "installer_exit_code_invalid"
+                }
+                $completionMode = "process_exit"
+                break
+            }
+
+            $candidateExe = Find-PowerBIExecutable
+            if ($candidateExe) {
+                $candidateVersion = (Get-Item -LiteralPath $candidateExe).VersionInfo.ProductVersion
+                if ($candidateVersion.StartsWith($expectedVersionPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    if (-not $stableExecutableSince) {
+                        $stableExecutableSince = Get-Date
+                    }
+                    elseif (((Get-Date) - $stableExecutableSince).TotalSeconds -ge 30) {
+                        $completionMode = "executable_stable_while_bootstrapper_running"
+                        break
+                    }
+                }
+                else {
+                    $stableExecutableSince = $null
+                }
+            }
+            else {
+                $stableExecutableSince = $null
+            }
+
+            Write-Host "POWERBI_E2E_INSTALL installer_running=$(-not $install.HasExited) executable_stable=$([bool]$stableExecutableSince)"
+        } while ((Get-Date) -lt $installDeadline)
+
+        if (-not $completionMode) {
             Stop-Process -Id $install.Id -Force -ErrorAction SilentlyContinue
             throw "installer_timeout"
         }
-        $install.Refresh()
-        if ($install.ExitCode -notin @(0, 3010)) {
-            throw "installer_exit_code_invalid"
+
+        if ($completionMode -eq "executable_stable_while_bootstrapper_running") {
+            Get-Process -Name "PBIDesktopSetup_x64" -ErrorAction SilentlyContinue |
+                Stop-Process -Force -ErrorAction SilentlyContinue
         }
 
         $powerBiExe = Find-PowerBIExecutable
@@ -165,7 +210,10 @@ try {
             throw "powerbi_version_mismatch"
         }
         $state.installed_version = $installedVersion
+        $state.installer_completion_mode = $completionMode
+        $state.installer_exit_code = $installerExitCode
         Write-State $state
+        Write-Host "POWERBI_E2E_INSTALL_COMPLETION=$completionMode"
         Write-Host "POWERBI_E2E_STAGE=install_completed"
         exit 0
     }
