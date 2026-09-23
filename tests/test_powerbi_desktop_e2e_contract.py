@@ -28,6 +28,10 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertIn("-Mode download", text)
         self.assertIn("-Mode install", text)
         self.assertIn("-Mode open", text)
+        self.assertIn("scripts/new_powerbi_project.py", text)
+        self.assertIn("GeneratedE2E", text)
+        self.assertIn("GENERATED_PBIP", text)
+        self.assertIn('-ProjectFile "$env:GENERATED_PBIP"', text)
 
     def test_script_uses_official_pinned_installer_and_real_pbip(self):
         text = SCRIPT.read_text(encoding="utf-8")
@@ -44,6 +48,8 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertIn('Get-Process -Name "PBIDesktop"', text)
         self.assertIn('Get-Process -Name "msmdsrv"', text)
         self.assertIn('Filter "localSettings.json"', text)
+        self.assertIn('[string]$ProjectFile = ""', text)
+        self.assertIn("$projectEvidencePath", text)
 
     def test_script_has_false_positive_controls(self):
         text = SCRIPT.read_text(encoding="utf-8")
