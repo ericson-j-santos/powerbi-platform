@@ -44,9 +44,17 @@ jobs:
         shell: powershell
         run: python scripts/validate_powerbi_repo.py .
 
-      - name: Install Power BI Desktop and open PBIP
+      - name: Download pinned Power BI Desktop
         shell: powershell
-        run: .\scripts\powerbi_desktop_e2e.ps1 -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode download -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+
+      - name: Install pinned Power BI Desktop
+        shell: powershell
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode install -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+
+      - name: Open PBIP in Power BI Desktop
+        shell: powershell
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode open -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
 
       - name: Upload sanitized E2E evidence
         if: always()
