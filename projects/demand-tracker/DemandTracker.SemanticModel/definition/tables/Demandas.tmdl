@@ -1,0 +1,136 @@
+table Demandas
+
+	column Id
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: Id
+
+	column Prioridade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Prioridade
+
+	column Estado
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Estado
+
+	column Projeto
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Projeto
+
+	column Demanda
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Demanda
+
+	column Tipo
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Tipo
+
+	column 'Próxima ação'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Próxima ação
+
+	column Bloqueio
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Bloqueio
+
+	column 'Critério de conclusão'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Critério de conclusão
+
+	column Evidência
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Evidência
+
+	column QueueState
+		dataType: string
+		summarizeBy: none
+		sourceColumn: QueueState
+
+	column CorrelationId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CorrelationId
+
+	column 'Atualizado em'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Atualizado em
+
+	partition Demandas = m
+		mode: import
+		source = ```
+				let
+				    Demo = #table(
+				        type table [
+				            Id = text, Prioridade = text, Estado = text, Projeto = text,
+				            Demanda = text, Tipo = text, #"Próxima ação" = text, Bloqueio = text,
+				            #"Critério de conclusão" = text, Evidência = text, QueueState = text,
+				            CorrelationId = text, #"Atualizado em" = text
+				        ],
+				        {
+					{"D01", "P0", "EM ANDAMENTO", "E2E", "Homologação E2E / PR5", "Validação", "Retomar a homologação e capturar evidência real do fluxo.", "Evidência ponta a ponta ainda precisa ser consolidada.", "E2E positivo + controle negativo + replay/idempotência evidenciados.", "", "PROCESSED", "corr-demo-d01", "2026-09-23T14:48:00-03:00"},
+					{"D02", "P0", "EM ANDAMENTO", "ReqSys", "Corrigir CI do PR #2011", "Correção", "Revalidar HEAD/SHA, checks e logs; corrigir causa raiz no mesmo PR.", "Estado atual dos checks precisa ser revalidado.", "Novo SHA com checks obrigatórios verdes e causa raiz validada.", "", "PROCESSED", "corr-demo-d02", "2026-09-23T14:48:00-03:00"},
+					{"D03", "P0", "PENDENTE", "ReqSys", "Continuação / merge do PR #2018", "Validação", "Consultar HEAD, mergeabilidade, revisões e checks antes de qualquer merge.", "Mergeabilidade e gates atuais precisam ser consultados novamente.", "Merge governado confirmado na fonte, sem regressão de gates.", "", "PROCESSED", "corr-demo-d03", "2026-09-23T14:48:00-03:00"},
+					{"D04", "P0", "BLOQUEADO", "ReqSys", "Central IA / Teams — bootstrap de identidade", "Integração", "Completar dependência externa e executar E2E ReqSys → IA → Teams.", "Identidade Entra dedicada / bootstrap externo requerido para concluir DEV.", "Fluxo DEV completo com identidade, permissões e leitura independente.", "", "PROCESSED", "corr-demo-d04", "2026-09-23T14:48:00-03:00"},
+					{"D05", "P1", "EM ANDAMENTO", "ReqSys", "Sincronização ReqSys ↔ Redmine", "Integração", "Consolidar vínculo, journals, idempotência e política de conflitos.", "Sincronização bidirecional governada ainda precisa de validação atual.", "Create/update/replay bidirecional sem duplicidade e com auditoria.", "", "PROCESSED", "corr-demo-d05", "2026-09-23T14:48:00-03:00"},
+					{"D06", "P1", "BLOQUEADO", "Runtime", "Modo Estudo Noteri — validação física", "Validação", "Revalidar controlador e executar fluxo NORMAL → ESTUDO → NORMAL.", "E2E físico depende do controlador/runtime estar operacional.", "Mudança real confirmada no host e reversão validada ponta a ponta.", "", "PROCESSED", "corr-demo-d06", "2026-09-23T14:48:00-03:00"},
+					{"D07", "P1", "EM ANDAMENTO", "Runtime", "Worker Pool — migração e E2E físico", "Infraestrutura", "Revalidar hosts, leases e execução isolada sem colisão.", "Validação física entre hosts ainda precisa de evidência atual.", "Builder → produced_sha → Validator → complete com correlação única.", "", "PROCESSED", "corr-demo-d07", "2026-09-23T14:48:00-03:00"},
+					{"D08", "P1", "EM ANDAMENTO", "Runtime", "Runtime dedicado Desktop PC24x7", "Infraestrutura", "Consolidar contratos de runtime, bootstrap, observabilidade e testes.", "Consolidação funcional ainda precisa ser acompanhada.", "Runtime reutilizável, governado e validado sem lógica de produto acoplada.", "", "PROCESSED", "corr-demo-d08", "2026-09-23T14:48:00-03:00"},
+					{"D09", "P1", "EM ANDAMENTO", "Runtime", "Runtime dedicado Noteri", "Infraestrutura", "Separar responsabilidades do host e executar validação do runtime.", "Estrutura dedicada precisa ser consolidada e validada.", "Runtime independente com bootstrap, health e recuperação comprovados.", "", "PROCESSED", "corr-demo-d09", "2026-09-23T14:48:00-03:00"},
+					{"D10", "P1", "EM ANDAMENTO", "ReqSys", "Repositório dedicado de dados do ReqSys", "Governança", "Definir schema, versionamento, migrações, acesso e validações.", "Desenho de governança e contratos ainda precisa ser consolidado.", "Dados versionados/governados com contrato e testes de compatibilidade.", "", "PROCESSED", "corr-demo-d10", "2026-09-23T14:48:00-03:00"},
+					{"D11", "P1", "EM ANDAMENTO", "ReqSys", "Repositório dedicado de logs do ReqSys", "Governança", "Consolidar contrato de eventos/logs, retenção, correlação e consumidores.", "Estado de implementação precisa ser confirmado.", "Logs consultáveis por correlation_id e sem dados sensíveis indevidos.", "", "PROCESSED", "corr-demo-d11", "2026-09-23T14:48:00-03:00"},
+					{"D12", "P1", "EM ANDAMENTO", "Automação", "Solução central de e-mail — enviar, receber e tratar", "Automação", "Fechar primeiro caminho útil: entrada → classificação → ação → saída → evidência.", "Fluxo Pareto está em construção e precisa de E2E pela própria aplicação.", "Envio e recebimento reais, tratamento idempotente e auditoria comprovada.", "", "PROCESSED", "corr-demo-d12", "2026-09-23T14:48:00-03:00"},
+					{"D13", "P1", "EM ANDAMENTO", "PBI", "PBI — repositório dedicado e evolução", "Power BI", "Centralizar modelo, medidas, datasets, documentação e CI aplicável.", "Backlog funcional ainda precisa ser consolidado.", "Projeto PBI reutilizável com versão, testes e documentação operacional.", "", "PROCESSED", "corr-demo-d13", "2026-09-23T14:48:00-03:00"},
+					{"D14", "P2", "PENDENTE", "OCR", "OCR Evidência — repositório e evolução", "Evolução", "Confirmar estado da main e selecionar menor incremento funcional.", "Próxima evolução precisa ser revalidada contra o repositório atual.", "Incremento validado com baseline preservada e E2E aplicável.", "", "PROCESSED", "corr-demo-d14", "2026-09-23T14:48:00-03:00"},
+					{"D15", "P1", "EM ANDAMENTO", "Runtime", "Migração do runner / execução persistente", "Infraestrutura", "Validar runner, isolamento de workers, recuperação e evidência por execução.", "Estado da migração precisa ser consolidado contra execução persistente atual.", "Execução retomável e governada com pós-condição validada.", "", "PROCESSED", "corr-demo-d15", "2026-09-23T14:48:00-03:00"},
+					{"D16", "P2", "PENDENTE", "Governança", "Sincronização Ágil / backlog", "Governança", "Normalizar demandas no TODO Global e projetar consumidores independentes.", "Backlog distribuído entre frentes precisa convergir para fonte única.", "Backlog reconciliado sem duplicidades e com identidade estável.", "", "PROCESSED", "corr-demo-d16", "2026-09-23T14:48:00-03:00"}
+				        }
+				    ),
+				    Sql = "
+				        WITH latest AS (
+				            SELECT DISTINCT ON (idempotency_key)
+				                event_id, idempotency_key, correlation_id, project,
+				                payload, state AS queue_state, created_at, updated_at
+				            FROM todo_bus.queue_events
+				            ORDER BY idempotency_key, created_at DESC, event_id DESC
+				        )
+				        SELECT
+				            idempotency_key AS ""Id"",
+				            COALESCE(payload->'todo'->>'priority','') AS ""Prioridade"",
+				            COALESCE(payload->'todo'->>'status','') AS ""Estado"",
+				            project AS ""Projeto"",
+				            COALESCE(payload->'todo'->>'title','') AS ""Demanda"",
+				            COALESCE(payload->'todo'->>'type','') AS ""Tipo"",
+				            COALESCE(payload->'todo'->>'next_action','') AS ""Próxima ação"",
+				            COALESCE(payload->'todo'->>'blocker','') AS ""Bloqueio"",
+				            COALESCE(payload->'todo'->>'completion_criteria','') AS ""Critério de conclusão"",
+				            COALESCE(payload->'todo'->>'evidence','') AS ""Evidência"",
+				            queue_state AS ""QueueState"",
+				            correlation_id AS ""CorrelationId"",
+				            updated_at::text AS ""Atualizado em""
+				        FROM latest
+				        ORDER BY updated_at DESC, idempotency_key
+				    ",
+				    Live = Value.NativeQuery(
+				        PostgreSQL.Database(TodoPostgresServer, TodoPostgresDatabase, [CreateNavigationProperties=false]),
+				        Sql,
+				        null,
+				        [EnableFolding=true]
+				    ),
+				    Source = if Text.Upper(Text.Trim(TodoSourceMode)) = "POSTGRES" then Live else Demo
+				in
+				    Source
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

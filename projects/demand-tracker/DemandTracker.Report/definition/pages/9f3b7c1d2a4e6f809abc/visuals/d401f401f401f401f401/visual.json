@@ -1,0 +1,143 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "d401f401f401f401f401",
+  "position": {
+    "x": 20,
+    "y": 280,
+    "z": 10000,
+    "height": 410,
+    "width": 1200,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Prioridade"
+                }
+              },
+              "queryRef": "Demandas.Prioridade",
+              "nativeQueryRef": "Prioridade"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Estado"
+                }
+              },
+              "queryRef": "Demandas.Estado",
+              "nativeQueryRef": "Estado"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Projeto"
+                }
+              },
+              "queryRef": "Demandas.Projeto",
+              "nativeQueryRef": "Projeto"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Demanda"
+                }
+              },
+              "queryRef": "Demandas.Demanda",
+              "nativeQueryRef": "Demanda"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Próxima ação"
+                }
+              },
+              "queryRef": "Demandas.Próxima ação",
+              "nativeQueryRef": "Próxima ação"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Bloqueio"
+                }
+              },
+              "queryRef": "Demandas.Bloqueio",
+              "nativeQueryRef": "Bloqueio"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Demandas"
+                    }
+                  },
+                  "Property": "Atualizado em"
+                }
+              },
+              "queryRef": "Demandas.Atualizado em",
+              "nativeQueryRef": "Atualizado em"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Demandas e próximos passos'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+table TodoPostgresServer
+	isHidden
+
+	column TodoPostgresServer
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: TodoPostgresServer
+
+	partition TodoPostgresServer = m
+		mode: import
+		source = "localhost:5432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+
+	changedProperty = IsHidden
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Text

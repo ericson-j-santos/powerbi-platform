@@ -1,0 +1,16 @@
+table TodoPostgresDatabase
+	isHidden
+
+	column TodoPostgresDatabase
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: TodoPostgresDatabase
+
+	partition TodoPostgresDatabase = m
+		mode: import
+		source = "todo_global_bus_dev" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+
+	changedProperty = IsHidden
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Text
