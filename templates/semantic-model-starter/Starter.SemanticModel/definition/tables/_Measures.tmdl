@@ -1,0 +1,13 @@
+table _Measures
+
+	/// Indicador simples para confirmar que o template foi carregado.
+	measure 'Template Ready' = 1
+		formatString: #,##0
+
+	column Dummy
+		isHidden
+		sourceColumn: [Dummy]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW("Dummy", BLANK())
