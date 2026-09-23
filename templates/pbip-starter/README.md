@@ -36,15 +36,28 @@ A estrutura PBIR baseia-se no Blank.Report publicado pela Microsoft Fabric CLI e
 
 ## Como consumir
 
-1. Copie a pasta `pbip-starter` para o repositório do projeto consumidor.
-2. Renomeie `Starter.pbip`, `Starter.Report` e `Starter.SemanticModel` usando o mesmo prefixo.
-3. Atualize:
-   - `<Projeto>.pbip -> artifacts[].report.path`;
-   - `<Projeto>.Report/definition.pbir -> datasetReference.byPath.path`;
-   - `<Projeto>.SemanticModel/definition/database.tmdl -> database <Nome>`.
-4. Adicione tabelas, relacionamentos, medidas e páginas próprias do produto.
-5. Execute `python scripts/validate_powerbi_repo.py .` no repositório que adotar o validador.
+Use o gerador para evitar renomeação e reescrita manual de referências:
+
+```bash
+python scripts/new_powerbi_project.py \
+  --name SalesAnalytics \
+  --output ../meu-projeto/powerbi
+```
+
+O nome é um identificador de 1 a 64 caracteres, começa com letra e aceita apenas letras ASCII, números e `_`.
+
+O gerador:
+
+- falha sem alterar o destino quando ele já existe;
+- copia somente os artefatos PBIP/PBIR/TMDL necessários;
+- não copia estado local `.pbi`, `localSettings.json` ou `cache.abf`;
+- renomeia `Starter.pbip`, `Starter.Report` e `Starter.SemanticModel`;
+- atualiza as referências PBIP → Report → SemanticModel;
+- atualiza o identificador do banco TMDL;
+- valida o resultado antes de publicar o diretório final.
+
+Depois da geração, adicione tabelas, relacionamentos, medidas e páginas próprias do produto no repositório consumidor.
 
 ## Estado de validação
 
-A consistência estrutural e as referências relativas são validadas em CI. A abertura real no Power BI Desktop continua sendo um critério E2E separado.
+O starter e o fluxo de geração são validados estruturalmente em CI. O E2E do repositório gera um consumidor temporário e abre o PBIP resultante no Power BI Desktop real.

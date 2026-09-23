@@ -6,7 +6,9 @@ on:
     paths:
       - "templates/pbip-starter/**"
       - "scripts/powerbi_desktop_e2e.ps1"
+      - "scripts/new_powerbi_project.py"
       - "tests/test_powerbi_desktop_e2e_contract.py"
+      - "tests/test_new_powerbi_project.py"
       - ".github/workflows/powerbi-desktop-e2e.yml"
   push:
     branches:
@@ -14,7 +16,9 @@ on:
     paths:
       - "templates/pbip-starter/**"
       - "scripts/powerbi_desktop_e2e.ps1"
+      - "scripts/new_powerbi_project.py"
       - "tests/test_powerbi_desktop_e2e_contract.py"
+      - "tests/test_new_powerbi_project.py"
       - ".github/workflows/powerbi-desktop-e2e.yml"
 
 permissions:
@@ -44,17 +48,29 @@ jobs:
         shell: powershell
         run: python scripts/validate_powerbi_repo.py .
 
+      - name: Generate PBIP consumer fixture
+        shell: powershell
+        run: |
+          $output = Join-Path "${{ runner.temp }}" "GeneratedE2E"
+          python scripts/new_powerbi_project.py --name GeneratedE2E --output $output
+          python scripts/validate_powerbi_repo.py $output
+          $pbip = Join-Path $output "GeneratedE2E.pbip"
+          if (-not (Test-Path -LiteralPath $pbip -PathType Leaf)) {
+            throw "Generated PBIP fixture missing"
+          }
+          "GENERATED_PBIP=$pbip" | Add-Content $env:GITHUB_ENV
+
       - name: Download pinned Power BI Desktop
         shell: powershell
-        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode download -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode download -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:GENERATED_PBIP"
 
       - name: Install pinned Power BI Desktop
         shell: powershell
-        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode install -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode install -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:GENERATED_PBIP"
 
-      - name: Open PBIP in Power BI Desktop
+      - name: Open generated PBIP in Power BI Desktop
         shell: powershell
-        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode open -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}"
+        run: .\scripts\powerbi_desktop_e2e.ps1 -Mode open -ExpectedSha "${{ env.TARGET_SHA }}" -CorrelationId "${{ env.CORRELATION_ID }}" -ProjectFile "$env:GENERATED_PBIP"
 
       - name: Upload sanitized E2E evidence
         if: always()
