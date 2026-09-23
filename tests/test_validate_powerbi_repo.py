@@ -1,4 +1,5 @@
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -155,6 +156,39 @@ class ValidatePowerBIRepoTests(unittest.TestCase):
             cache = root / "Demo.SemanticModel" / ".pbi"
             cache.mkdir(parents=True)
             (cache / "localSettings.json").write_text("{}", encoding="utf-8")
+            errors = validate(root)
+            self.assertTrue(any("estado local" in error for error in errors))
+
+    def test_accepts_ignored_powerbi_local_state_in_git_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+            (root / ".gitignore").write_text(
+                "**/.pbi/localSettings.json\n**/.pbi/cache.abf\n",
+                encoding="utf-8",
+            )
+            cache = root / "scratch" / ".pbi"
+            cache.mkdir(parents=True)
+            (cache / "localSettings.json").write_text("{}", encoding="utf-8")
+
+            errors = validate(root)
+            self.assertFalse(any("estado local" in error for error in errors))
+
+    def test_rejects_tracked_powerbi_local_state_in_git_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+            cache = root / "scratch" / ".pbi"
+            cache.mkdir(parents=True)
+            local = cache / "localSettings.json"
+            local.write_text("{}", encoding="utf-8")
+            subprocess.run(
+                ["git", "add", "-f", local.relative_to(root).as_posix()],
+                cwd=root,
+                check=True,
+                capture_output=True,
+            )
+
             errors = validate(root)
             self.assertTrue(any("estado local" in error for error in errors))
 
