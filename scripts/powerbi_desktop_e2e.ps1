@@ -5,7 +5,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ExpectedSha,
     [Parameter(Mandatory = $true)]
-    [string]$CorrelationId
+    [string]$CorrelationId,
+    [string]$ProjectUnderTest = ""
 )
 
 Set-StrictMode -Version Latest
@@ -14,14 +15,53 @@ $ErrorActionPreference = "Stop"
 $installerUrl = "https://download.microsoft.com/download/8/8/0/880bca75-79dd-466a-927d-1abf1f5454b0/PBIDesktopSetup_x64.exe"
 $expectedVersionPrefix = "2.157.1354"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$projectRelative = "templates/pbip-starter/Starter.pbip"
-$projectPath = Join-Path $repoRoot $projectRelative
+$defaultProjectRelative = "templates/pbip-starter/Starter.pbip"
+$projectEvidencePath = $defaultProjectRelative
+$projectPath = Join-Path $repoRoot $defaultProjectRelative
 $evidenceDir = Join-Path $env:RUNNER_TEMP "powerbi-desktop-e2e"
 $evidencePath = Join-Path $evidenceDir "evidence.json"
 $statePath = Join-Path $evidenceDir "state.json"
 $installerPath = Join-Path $env:RUNNER_TEMP "PBIDesktopSetup_x64.exe"
 
 New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+
+function Test-PathWithin([string]$Candidate, [string]$Root) {
+    $normalizedCandidate = [IO.Path]::GetFullPath($Candidate)
+    $normalizedRoot = [IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    if ($normalizedCandidate.Equals($normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $true
+    }
+    $prefix = $normalizedRoot + [IO.Path]::DirectorySeparatorChar
+    return $normalizedCandidate.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Resolve-ProjectUnderTest {
+    if ([string]::IsNullOrWhiteSpace($ProjectUnderTest)) {
+        return
+    }
+
+    $resolvedProject = (Resolve-Path -LiteralPath $ProjectUnderTest -ErrorAction Stop).Path
+    if ([IO.Path]::GetExtension($resolvedProject) -ne ".pbip") {
+        throw "project_extension_invalid"
+    }
+
+    $runnerTempRoot = (Resolve-Path -LiteralPath $env:RUNNER_TEMP -ErrorAction Stop).Path
+    $inRepo = Test-PathWithin -Candidate $resolvedProject -Root $repoRoot
+    $inRunnerTemp = Test-PathWithin -Candidate $resolvedProject -Root $runnerTempRoot
+    if (-not $inRepo -and -not $inRunnerTemp) {
+        throw "project_path_not_allowed"
+    }
+
+    $script:projectPath = $resolvedProject
+    if ($inRepo) {
+        $relative = [IO.Path]::GetRelativePath($repoRoot, $resolvedProject).Replace('\', '/')
+        $script:projectEvidencePath = $relative
+    }
+    else {
+        $relative = [IO.Path]::GetRelativePath($runnerTempRoot, $resolvedProject).Replace('\', '/')
+        $script:projectEvidencePath = "<runner-temp>/$relative"
+    }
+}
 
 function Read-State {
     if (Test-Path -LiteralPath $statePath) {
@@ -73,7 +113,7 @@ function Write-Evidence(
             window_title_present = $WindowTitlePresent
         }
         project = [ordered]@{
-            path = $projectRelative
+            path = $projectEvidencePath
             local_settings_created_count = $LocalSettingsCount
             cache_abf_created_count = $CacheAbfCount
             repository_clean_after_open = $RepoCleanAfterOpen
@@ -110,6 +150,7 @@ function Find-PowerBIExecutable {
 }
 
 try {
+    Resolve-ProjectUnderTest
     Assert-ImmutableCheckout
 
     if ($Mode -eq "download") {

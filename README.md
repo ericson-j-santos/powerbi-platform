@@ -28,6 +28,19 @@ Não inclui:
 
 Permitir que diferentes projetos consumam uma base comum de Power BI sem duplicar padrões, scripts e componentes.
 
+## Início rápido
+
+Gere um projeto a partir do starter canônico:
+
+```bash
+python scripts/new_powerbi_project.py --name SalesAnalytics --output projects/SalesAnalytics
+python scripts/validate_powerbi_repo.py projects/SalesAnalytics
+```
+
+O nome técnico aceita letras, números e `_`, deve começar por letra e não pode ser um nome reservado do Windows. O gerador não sobrescreve destinos existentes.
+
 ## Estado
 
-Estrutura inicial em implantação.
+- starter PBIP/PBIR/TMDL validado estruturalmente;
+- abertura real validada em Power BI Desktop por E2E Windows efêmero;
+- gerador reutilizável coberto por testes positivos, negativos e E2E do projeto gerado.
