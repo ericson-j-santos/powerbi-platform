@@ -23,6 +23,8 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertNotIn("secrets.", text)
         self.assertIn("TARGET_SHA:", text)
         self.assertIn("actions/upload-artifact@v4", text)
+        self.assertNotIn("\\${{", text)
+        self.assertIn("ref: ${{ env.TARGET_SHA }}", text)
 
     def test_script_uses_official_pinned_installer_and_real_pbip(self):
         text = SCRIPT.read_text(encoding="utf-8")
