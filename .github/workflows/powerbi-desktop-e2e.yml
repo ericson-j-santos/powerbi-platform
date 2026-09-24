@@ -90,6 +90,9 @@ jobs:
             throw "E2E evidence file missing"
           }
           $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if ($evidence.status -ne "success") { throw "E2E evidence status is not success" }
+          if ($evidence.github_sha -ne "${{ env.TARGET_SHA }}") { throw "E2E evidence SHA mismatch" }
+          if ($evidence.production_touched -ne $false) { throw "E2E evidence reports production touched" }
           "## Power BI Desktop E2E" | Add-Content $env:GITHUB_STEP_SUMMARY
           "- Status: $($evidence.status)" | Add-Content $env:GITHUB_STEP_SUMMARY
           "- SHA: $($evidence.github_sha)" | Add-Content $env:GITHUB_STEP_SUMMARY
