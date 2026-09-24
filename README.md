@@ -30,4 +30,12 @@ Permitir que diferentes projetos consumam uma base comum de Power BI sem duplica
 
 ## Estado
 
-Estrutura inicial em implantação.
+Base operacional ativa e validada por CI estrutural e E2E em Power BI Desktop real.
+
+- projetos PBIP e modelo semântico versionados como texto;
+- geração de novos projetos com validação fail-closed;
+- workflows com permissões somente leitura e checkout por SHA alvo;
+- E2E do template e do Demand Tracker vinculados ao SHA executado;
+- hardening de governança e cadeia de suprimentos documentado em `docs/gold-standard.md`.
+
+A leitura real do TODO Global via PostgreSQL permanece rastreada separadamente na issue #14 e não é inferida a partir do E2E em modo Demo.

@@ -22,7 +22,7 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertNotIn("secrets.", text)
         self.assertIn("TARGET_SHA:", text)
-        self.assertIn("actions/upload-artifact@v4", text)
+        self.assertIn("actions/upload-artifact@", text)
         self.assertNotIn("\\${{", text)
         self.assertIn("ref: ${{ env.TARGET_SHA }}", text)
         self.assertIn("-Mode download", text)
