@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload sanitized E2E evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: powerbi-desktop-e2e-${{ github.run_id }}
           path: ${{ runner.temp }}/powerbi-desktop-e2e/evidence.json
@@ -90,6 +90,9 @@ jobs:
             throw "E2E evidence file missing"
           }
           $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if ($evidence.status -ne "success") { throw "E2E evidence status is not success" }
+          if ($evidence.github_sha -ne "${{ env.TARGET_SHA }}") { throw "E2E evidence SHA mismatch" }
+          if ($evidence.production_touched -ne $false) { throw "E2E evidence reports production touched" }
           "## Power BI Desktop E2E" | Add-Content $env:GITHUB_STEP_SUMMARY
           "- Status: $($evidence.status)" | Add-Content $env:GITHUB_STEP_SUMMARY
           "- SHA: $($evidence.github_sha)" | Add-Content $env:GITHUB_STEP_SUMMARY
