@@ -34,3 +34,7 @@ Nenhum usuário, senha, token ou connection string com segredo é versionado.
 
 O projeto recebe validação estrutural e E2E em Power BI Desktop real, vinculada ao SHA da PR.
 O modo `Postgres` só é considerado validado quando houver leitura real do TODO Global no mesmo ambiente, com credenciais mantidas fora do Git.
+
+## Visual executivo
+
+A página **Demandas Operacionais** usa layout executivo em 1280×720: cabeçalho contextual, cinco KPIs, filtros compactos, gráfico de distribuição por estado e tabela de ação sem sobreposição entre visuais. O canvas usa fundo neutro e os contêineres têm superfície branca, borda arredondada e destaque semântico nos KPIs críticos.

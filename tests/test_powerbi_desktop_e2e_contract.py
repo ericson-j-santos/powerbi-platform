@@ -44,6 +44,13 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
         self.assertIn('completionMode = "executable_stable_while_bootstrapper_running"', text)
         self.assertIn('Get-Process -Name "PBIDesktopSetup_x64"', text)
         self.assertNotIn("Wait-Process -Id $install.Id -Timeout 240", text)
+        self.assertIn("Get-InstallerCompletion", text)
+        self.assertIn("ProgramW6432", text)
+        self.assertIn("App Paths\\PBIDesktop.exe", text)
+        self.assertNotIn(
+            'Get-ChildItem -LiteralPath $env:ProgramFiles -Filter "PBIDesktop.exe" -Recurse',
+            text,
+        )
         self.assertIn("templates/pbip-starter/Starter.pbip", text)
         self.assertIn('Get-Process -Name "PBIDesktop"', text)
         self.assertIn('Get-Process -Name "msmdsrv"', text)
