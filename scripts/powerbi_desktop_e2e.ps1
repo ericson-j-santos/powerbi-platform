@@ -114,12 +114,52 @@ function Assert-ImmutableCheckout {
 }
 
 function Find-PowerBIExecutable {
-    $candidate = Join-Path $env:ProgramFiles "Microsoft Power BI Desktop\bin\PBIDesktop.exe"
-    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
-        return $candidate
+    # Keep discovery bounded. A recursive scan of Program Files can take longer
+    # than the installer deadline on hosted Windows runners and create a false timeout.
+    $roots = @(
+        $env:ProgramW6432,
+        $env:ProgramFiles,
+        ${env:ProgramFiles(x86)}
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
+
+    foreach ($root in $roots) {
+        $candidate = Join-Path $root "Microsoft Power BI Desktop\bin\PBIDesktop.exe"
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return $candidate
+        }
     }
-    return Get-ChildItem -LiteralPath $env:ProgramFiles -Filter "PBIDesktop.exe" -Recurse -File -ErrorAction SilentlyContinue |
-        Select-Object -First 1 -ExpandProperty FullName
+
+    foreach ($registryPath in @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PBIDesktop.exe",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\PBIDesktop.exe"
+    )) {
+        $registryKey = Get-Item -LiteralPath $registryPath -ErrorAction SilentlyContinue
+        if ($registryKey) {
+            $candidate = [string]$registryKey.GetValue("")
+            if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+                return $candidate
+            }
+        }
+    }
+
+    return $null
+}
+
+function Get-InstallerCompletion([System.Diagnostics.Process]$InstallerProcess) {
+    $InstallerProcess.Refresh()
+    if (-not $InstallerProcess.HasExited) {
+        return $null
+    }
+
+    $exitCode = $InstallerProcess.ExitCode
+    if ($exitCode -notin @(0, 3010)) {
+        throw "installer_exit_code_invalid:$exitCode"
+    }
+
+    return [pscustomobject]@{
+        mode = "process_exit"
+        exit_code = $exitCode
+    }
 }
 
 try {
@@ -170,14 +210,10 @@ try {
 
         do {
             Start-Sleep -Seconds 5
-            $install.Refresh()
-
-            if ($install.HasExited) {
-                $installerExitCode = $install.ExitCode
-                if ($installerExitCode -notin @(0, 3010)) {
-                    throw "installer_exit_code_invalid"
-                }
-                $completionMode = "process_exit"
+            $completion = Get-InstallerCompletion -InstallerProcess $install
+            if ($completion) {
+                $installerExitCode = $completion.exit_code
+                $completionMode = $completion.mode
                 break
             }
 
@@ -203,6 +239,16 @@ try {
 
             Write-Host "POWERBI_E2E_INSTALL installer_running=$(-not $install.HasExited) executable_stable=$([bool]$stableExecutableSince)"
         } while ((Get-Date) -lt $installDeadline)
+
+        if (-not $completionMode) {
+            # Close the race where the bootstrapper exits after the last loop check
+            # but before the deadline condition is evaluated.
+            $completion = Get-InstallerCompletion -InstallerProcess $install
+            if ($completion) {
+                $installerExitCode = $completion.exit_code
+                $completionMode = $completion.mode
+            }
+        }
 
         if (-not $completionMode) {
             Stop-Process -Id $install.Id -Force -ErrorAction SilentlyContinue
