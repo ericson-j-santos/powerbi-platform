@@ -36,7 +36,7 @@ class PowerBIDesktopE2EContractTests(unittest.TestCase):
     def test_script_uses_official_pinned_installer_and_real_pbip(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("https://download.microsoft.com/", text)
-        self.assertIn('expectedVersionPrefix = "2.157.1354"', text)
+        self.assertIn('expectedVersionPrefix = "2.156.951"', text)
         self.assertIn("ACCEPT_EULA=1", text)
         self.assertIn('ValidateSet("download", "install", "open")', text)
         self.assertIn("--max-time 240", text)

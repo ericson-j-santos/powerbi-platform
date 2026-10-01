@@ -12,8 +12,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$installerUrl = "https://download.microsoft.com/download/8/8/0/880bca75-79dd-466a-927d-1abf1f5454b0/PBIDesktopSetup_x64.exe"
-$expectedVersionPrefix = "2.157.1354"
+$installerUrl = "https://download.microsoft.com/download/8/8/0/880BCA75-79DD-466A-927D-1ABF1F5454B0/PBIDesktopSetup-2026-07_x64.exe"
+$expectedVersionPrefix = "2.156.951"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $defaultProjectRelative = "templates/pbip-starter/Starter.pbip"
 $defaultProjectPath = Join-Path $repoRoot $defaultProjectRelative
