@@ -16,8 +16,19 @@ LOCAL_STATE_FILES = {
 
 
 def _git_tracked_files(root: Path) -> set[str] | None:
-    """Return Git-tracked paths, or None when Git state cannot be established."""
+    """Return tracked paths only when ``root`` is the Git repository root."""
     try:
+        git_root_result = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        git_root_raw = git_root_result.stdout.strip()
+        if not git_root_raw or Path(git_root_raw).resolve() != root.resolve():
+            return None
+
         completed = subprocess.run(
             ["git", "-C", str(root), "ls-files", "-z"],
             check=True,

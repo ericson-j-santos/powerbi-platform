@@ -80,7 +80,10 @@ class NewPowerBIProjectTests(unittest.TestCase):
                         "reserved_windows_project_name",
                     ):
                         generate_project(name, output)
-                    self.assertFalse(output.exists())
+                    self.assertNotIn(
+                        name.casefold(),
+                        {path.name.casefold() for path in root.iterdir()},
+                    )
 
     def test_does_not_copy_powerbi_local_state(self):
         with tempfile.TemporaryDirectory() as tmp:

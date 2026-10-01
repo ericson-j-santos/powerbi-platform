@@ -159,6 +159,27 @@ class ValidatePowerBIRepoTests(unittest.TestCase):
             errors = validate(root)
             self.assertTrue(any("estado local" in error for error in errors))
 
+    def test_nested_directory_does_not_inherit_parent_git_tracking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            git_root = Path(tmp)
+            subprocess.run(
+                ["git", "init"],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+            )
+            root = git_root / "untracked-validation-root"
+            root.mkdir()
+            (root / "report.pbix").write_bytes(b"binary")
+            cache = root / "Demo.SemanticModel" / ".pbi"
+            cache.mkdir(parents=True)
+            (cache / "localSettings.json").write_text("{}", encoding="utf-8")
+
+            errors = validate(root)
+
+            self.assertTrue(any("pbix" in error.lower() for error in errors))
+            self.assertTrue(any("estado local" in error for error in errors))
+
     def test_accepts_ignored_powerbi_local_state_in_git_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
