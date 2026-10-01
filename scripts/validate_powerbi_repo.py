@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -16,23 +17,35 @@ LOCAL_STATE_FILES = {
 
 
 def _git_tracked_files(root: Path) -> set[str] | None:
-    """Return Git-tracked paths, or None when Git state cannot be established."""
+    """Return tracked paths for a Git root or a tracked repository subtree."""
     try:
-        completed = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "-z"],
+        prefix_result = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-prefix"],
             check=True,
             capture_output=True,
-            text=True,
+            timeout=10,
+        )
+        completed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z", "--", "."],
+            check=True,
+            capture_output=True,
             timeout=10,
         )
     except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
 
-    return {
-        item.replace("\\", "/").casefold()
-        for item in completed.stdout.split("\0")
+    tracked_files = {
+        os.fsdecode(item).replace("\\", "/").casefold()
+        for item in completed.stdout.split(b"\0")
         if item
     }
+    is_repository_root = not prefix_result.stdout.rstrip(b"\r\n")
+    if is_repository_root or tracked_files:
+        return tracked_files
+
+    # An unrelated ancestor repository must not make an untracked validation
+    # root appear empty. Fall back to validating every file on disk.
+    return None
 
 
 def _resolve_relative(
