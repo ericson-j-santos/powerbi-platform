@@ -12,7 +12,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$installerUrl = "https://download.microsoft.com/download/8/8/0/880bca75-79dd-466a-927d-1abf1f5454b0/PBIDesktopSetup_x64.exe"
+# Version and digest: microsoft/winget-pkgs, Microsoft.PowerBI/2.157.1354.0.
+# Never use PBIDesktopSetup_x64.exe here: that URL changes across releases.
+$installerUrl = "https://download.microsoft.com/download/8/8/0/880BCA75-79DD-466A-927D-1ABF1F5454B0/PBIDesktopSetup-2026-08_x64.exe"
+$expectedInstallerSha256 = "9996c3c015d33e1a05041ee0631727890c75ab66685e268f2c3cd2c7b8cb0209"
 $expectedVersionPrefix = "2.157.1354"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $defaultProjectRelative = "templates/pbip-starter/Starter.pbip"
@@ -74,6 +77,7 @@ function Write-Evidence(
         installer = [ordered]@{
             source_host = "download.microsoft.com"
             expected_version_prefix = $expectedVersionPrefix
+            expected_sha256 = $expectedInstallerSha256
             observed_sha256 = $state.installer_sha256
             completion_mode = $state.installer_completion_mode
             exit_code = $state.installer_exit_code
@@ -178,6 +182,9 @@ try {
         $state = Read-State
         $state.installer_sha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
         Write-State $state
+        if ($state.installer_sha256 -ne $expectedInstallerSha256) {
+            throw "installer_sha256_mismatch"
+        }
         Write-Host "POWERBI_E2E_STAGE=download_completed"
         exit 0
     }
@@ -189,7 +196,7 @@ try {
         }
         $state = Read-State
         $observedHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
-        if (-not $state.installer_sha256 -or $observedHash -ne $state.installer_sha256) {
+        if (-not $state.installer_sha256 -or $observedHash -ne $state.installer_sha256 -or $observedHash -ne $expectedInstallerSha256) {
             throw "installer_hash_changed"
         }
 
@@ -265,13 +272,14 @@ try {
             throw "powerbi_executable_not_found"
         }
         $installedVersion = (Get-Item -LiteralPath $powerBiExe).VersionInfo.ProductVersion
-        if (-not $installedVersion.StartsWith($expectedVersionPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw "powerbi_version_mismatch"
-        }
+        # Persist the observation before enforcing the gate, including failures.
         $state.installed_version = $installedVersion
         $state.installer_completion_mode = $completionMode
         $state.installer_exit_code = $installerExitCode
         Write-State $state
+        if (-not $installedVersion.StartsWith($expectedVersionPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "powerbi_version_mismatch"
+        }
         Write-Host "POWERBI_E2E_INSTALL_COMPLETION=$completionMode"
         Write-Host "POWERBI_E2E_STAGE=install_completed"
         exit 0
