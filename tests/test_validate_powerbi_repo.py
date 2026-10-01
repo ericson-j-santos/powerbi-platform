@@ -180,6 +180,60 @@ class ValidatePowerBIRepoTests(unittest.TestCase):
             self.assertTrue(any("pbix" in error.lower() for error in errors))
             self.assertTrue(any("estado local" in error for error in errors))
 
+    def test_nested_tracked_project_preserves_ignored_local_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            git_root = Path(tmp)
+            subprocess.run(
+                ["git", "init"],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+            )
+            root = git_root / "analytics"
+            root.mkdir()
+            (root / ".gitignore").write_text(
+                "**/.pbi/localSettings.json\n",
+                encoding="utf-8",
+            )
+            (root / "README.md").write_text("tracked", encoding="utf-8")
+            subprocess.run(
+                ["git", "add", "analytics/.gitignore", "analytics/README.md"],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+            )
+            cache = root / "Demo.SemanticModel" / ".pbi"
+            cache.mkdir(parents=True)
+            (cache / "localSettings.json").write_text("{}", encoding="utf-8")
+
+            errors = validate(root)
+
+            self.assertFalse(any("estado local" in error for error in errors))
+
+    def test_nested_non_ascii_project_decodes_git_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            git_root = Path(tmp)
+            subprocess.run(
+                ["git", "init"],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+            )
+            root = git_root / "análises"
+            root.mkdir()
+            binary = root / "relatório.pbix"
+            binary.write_bytes(b"binary")
+            subprocess.run(
+                ["git", "add", binary.relative_to(git_root).as_posix()],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+            )
+
+            errors = validate(root)
+
+            self.assertTrue(any("relatório.pbix" in error for error in errors))
+
     def test_accepts_ignored_powerbi_local_state_in_git_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
