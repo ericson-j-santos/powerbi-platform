@@ -39,19 +39,41 @@ class DemandTrackerProjectTests(unittest.TestCase):
         page=json.loads((PAGE/"page.json").read_text(encoding="utf-8"))
         self.assertEqual(page["displayName"],"Demandas Operacionais")
         visual_files=sorted((PAGE/"visuals").glob("*/visual.json"))
-        self.assertEqual(len(visual_files),10)
-        types=[]; serialized=[]
+        self.assertGreaterEqual(len(visual_files),10)
+        types=[]; serialized=[]; data_visuals=[]
         for path in visual_files:
             payload=json.loads(path.read_text(encoding="utf-8"))
-            types.append(payload["visual"]["visualType"])
+            visual_type=payload["visual"]["visualType"]
+            types.append(visual_type)
             serialized.append(json.dumps(payload,ensure_ascii=False))
-        self.assertEqual(types.count("cardVisual"),5)
-        self.assertEqual(types.count("slicer"),3)
-        self.assertEqual(types.count("barChart"),1)
-        self.assertEqual(types.count("tableEx"),1)
+            if visual_type in {"cardVisual","slicer","barChart","tableEx","textbox"}:
+                data_visuals.append((visual_type,payload["position"]))
+        for visual_type,minimum in {
+            "cardVisual":5,
+            "slicer":3,
+            "barChart":1,
+            "tableEx":1,
+            "textbox":1,
+        }.items():
+            self.assertGreaterEqual(types.count(visual_type),minimum)
         joined="\n".join(serialized)
-        for field in ("Prioridade","Estado","Projeto","Próxima ação","Bloqueio"):
+        for field in ("Prioridade","Estado","Projeto","Próxima ação","Bloqueio","Demandas Operacionais"):
             self.assertIn(field,joined)
+
+        def overlaps(left,right):
+            return not (
+                left["x"]+left["width"] <= right["x"]
+                or right["x"]+right["width"] <= left["x"]
+                or left["y"]+left["height"] <= right["y"]
+                or right["y"]+right["height"] <= left["y"]
+            )
+
+        for index,(left_type,left_position) in enumerate(data_visuals):
+            for right_type,right_position in data_visuals[index+1:]:
+                self.assertFalse(
+                    overlaps(left_position,right_position),
+                    f"visual_overlap:{left_type}:{right_type}",
+                )
 
     def test_e2e_workflow_opens_this_pbip_on_target_sha(self):
         workflow=(ROOT/".github"/"workflows"/"demand-tracker-desktop-e2e.yml").read_text(encoding="utf-8")
