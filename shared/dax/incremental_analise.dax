@@ -1,0 +1,41 @@
+// Consulta para a Exibição de Consulta DAX (não é política incremental).
+// Trocar FatoMovimento, DimCalendario, Valor pelos nomes reais do modelo.
+// O refresh incremental é configurado no Power Query + modelo semântico.
+// Relação DimCalendario[Data] -> FatoMovimento[DataMovimento] ativa.
+DEFINE
+    MEASURE FatoMovimento[Valor Total] =
+        SUM(FatoMovimento[Valor])
+
+    MEASURE FatoMovimento[Quantidade de Movimentos] =
+        COUNTROWS(FatoMovimento)
+
+    MEASURE FatoMovimento[Valor Acumulado no Mês] =
+        CALCULATE(
+            [Valor Total],
+            DATESMTD(DimCalendario[Data])
+        )
+
+    MEASURE FatoMovimento[Valor Mês Anterior] =
+        CALCULATE(
+            [Valor Total],
+            DATEADD(DimCalendario[Data], -1, MONTH)
+        )
+
+    MEASURE FatoMovimento[Variação Absoluta] =
+        [Valor Total] - [Valor Mês Anterior]
+
+    MEASURE FatoMovimento[Variação Percentual] =
+        DIVIDE(
+            [Variação Absoluta],
+            [Valor Mês Anterior]
+        )
+
+EVALUATE
+SUMMARIZECOLUMNS(
+    DimCalendario[AnoMes],
+    "Valor Total", [Valor Total],
+    "Quantidade", [Quantidade de Movimentos],
+    "Valor Mês Anterior", [Valor Mês Anterior],
+    "Variação Percentual", [Variação Percentual]
+)
+ORDER BY DimCalendario[AnoMes]
