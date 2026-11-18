@@ -1,0 +1,39 @@
+{
+  "schema": "git-cas-v1",
+  "repo": "ericson-j-santos/powerbi-platform",
+  "base_sha": "bc2285c15b54bbef0be20be3ddb8c41160a279e8",
+  "rules_sha": "58dcd4200f412a866278027ba9e433439a03f3b3",
+  "issue": 29,
+  "source_mode": "assisted",
+  "model_calls": 0,
+  "correlation_id": "incremental-multilang-20261118",
+  "idempotency_key": "powerbi-shared-incremental-m-dax-v1",
+  "local_tests": "3 contratos estáticos passados em checkout de estrutura equivalente",
+  "target_e2e": "PENDENTE: Power BI Desktop/Service somente ao integrar no modelo",
+  "files": [
+    {
+      "path": "shared/power-query/incremental_sqlserver_minimo.m",
+      "sha": "c0e2c1c933f3c66b1d47884161a07601ac279b95"
+    },
+    {
+      "path": "shared/power-query/incremental_sqlserver_datetime.m",
+      "sha": "60c5ebdc2762f1eba37e389cc57d0130230815e3"
+    },
+    {
+      "path": "shared/power-query/incremental_sqlserver_chave_aaaammdd.m",
+      "sha": "53889904092813f39b6b4f719d43a56ef581fc3c"
+    },
+    {
+      "path": "shared/dax/incremental_analise.dax",
+      "sha": "a04a59aff7747fe337bf8d24ff078faca9f50655"
+    },
+    {
+      "path": "tests/test_incremental_shared_contract.py",
+      "sha": "5b21e7896b7ab8a088a351e8eca2dedae939a55d"
+    },
+    {
+      "path": "docs/processamento_incremental.md",
+      "sha": "abd7db92e6fa0ca01ed39a5dc15efa6b03607ce9"
+    }
+  ]
+}
