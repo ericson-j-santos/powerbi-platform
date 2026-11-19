@@ -14,7 +14,7 @@ def caso(cenario, filtro, resultado, *, erro="", linhas="42",
         "cenario": cenario, "filtro": filtro, "resultado": resultado,
         "replicas": "1", "ambiente": ambiente, "erro_literal": erro,
         "evidencia": "TESTE_SINTETICO_LOCAL", "workspace_id": "lab",
-        "modelo_id": "modelo", "run_id": run,
+        "modelo_id": "modelo", "run_id": run, "origem_id": "aw2025-lab-isolado",
         "sql_linhas": linhas, "dax_linhas": linhas,
         "sql_vendas": vendas, "dax_vendas": vendas,
         "sql_itens": itens, "dax_itens": itens,
@@ -37,6 +37,23 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         resposta = analisar(cenarios())
         self.assertEqual(resposta["estado"], "CANDIDATOS_PARA_READBACK")
         self.assertEqual(resposta["correcoes"][0]["estado"], "CANDIDATO_NAO_HOMOLOGADO")
+
+    def test_origem_diferente_na_correcao_bloqueia(self):
+        a = cenarios()
+        a[2]["origem_id"] = "aw-dw2022-lab-isolado"
+        resposta = analisar(a)
+        self.assertEqual(resposta["estado"], "BLOQUEADO")
+        self.assertEqual(resposta["motivo"], "origem_ausente_ou_mista")
+
+    def test_origem_ausente_bloqueia(self):
+        a = cenarios()
+        a[0]["origem_id"] = ""
+        self.assertEqual(analisar(a)["estado"], "BLOQUEADO")
+
+    def test_mesmo_id_de_origem_nao_valida_autenticidade(self):
+        a = cenarios()
+        self.assertEqual(analisar(a)["estado"], "CANDIDATOS_PARA_READBACK")
+        self.assertIn("autenticidade", analisar(a)["limite"])
 
     def test_service_runs_distintos(self):
         self.assertEqual(analisar(cenarios("Service"))["estado"], "CANDIDATOS_PARA_READBACK")
@@ -129,6 +146,60 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         self.assertIn("IF OBJECT_ID(N'dbo.vw_LabPBI_Memoria_2026') IS NOT NULL", sql)
         self.assertIn("CREATE VIEW", sql)
         self.assertNotIn("DROP VIEW", sql.upper())
+
+    def test_preflight_adventureworks2025_protege_tabela(self):
+        sql = (ROOT / "sql" / "06_preflight_adventureworks2025.sql").read_text(encoding="utf-8")
+        self.assertIn("DB_ID(N'AdventureWorks2025')", sql)
+        self.assertIn("AdventureWorks2025.Sales.SalesOrderDetail", sql)
+        self.assertIn("AdventureWorks2025.Sales.SalesOrderHeader", sql)
+        self.assertIn("IF @BancoID IS NULL OR @DetalheID IS NULL OR @CabecalhoID IS NULL", sql)
+        self.assertLess(sql.index("IF @BancoID IS NULL OR @DetalheID IS NULL"),
+                        sql.index("EXEC sys.sp_executesql"))
+
+    def test_sql_oltp2025_e_m_compatibilizam_campos(self):
+        m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
+        sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
+        for campo in ("SalesOrderID", "SalesOrderDetailID", "ReplicaID",
+                      "LineTotal", "OrderQty", "CustomerID"):
+            self.assertIn(campo, m)
+            self.assertIn(campo, sql)
+        self.assertIn('Sql.Database(', m)
+        self.assertIn('"AdventureWorks2025"', m)
+        self.assertIn("Value.NativeQuery(", m)
+        self.assertIn("[QtdeReplicas = Escala]", m)
+        self.assertIn("[EnableFolding = true]", m)
+        self.assertIn("r.ReplicaID < @QtdeReplicas", m)
+        self.assertIn("r.ReplicaID < @QtdeReplicas", sql)
+        self.assertIn("CHECKSUM(", m)
+        self.assertIn("CHECKSUM(", sql)
+        self.assertIn("LinhasJaneiro", sql)
+        self.assertIn("LinhasEsperadasAno", sql)
+
+    def test_sql_oltp2025_valor_arredondado_antes_de_somar(self):
+        m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
+        sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
+        import re
+        sem_espaco = lambda texto: re.sub(r"\\s+", "", texto)
+        self.assertIn("CONVERT(decimal(19,4),d.LineTotal)", sem_espaco(m))
+        self.assertIn("CONVERT(decimal(19,4),d.LineTotal)", sem_espaco(sql))
+
+    def test_oltp2025_nao_cria_objetos(self):
+        m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
+        sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
+        import re
+        remove_comentarios = lambda texto: re.sub(r"/\\*.*?\\*/|--[^\\n]*|//[^\\n]*", "", texto, flags=re.DOTALL)
+        proibidos = re.compile(r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b", re.IGNORECASE)
+        self.assertIsNone(proibidos.search(remove_comentarios(m)))
+        self.assertIsNone(proibidos.search(remove_comentarios(sql)))
+
+    def test_csv_exige_identidade_de_origem(self):
+        csv_path = ROOT / "evidencias" / "MATRIZ_DE_TESTES.csv"
+        self.assertIn("origem_id", csv_path.read_text(encoding="utf-8").splitlines()[0])
+        import csv
+        with csv_path.open(encoding="utf-8", newline="") as f:
+            linhas = list(csv.DictReader(f))
+        self.assertTrue(linhas)
+        self.assertTrue(all("origem_id" in linha for linha in linhas))
 
     def test_select_sem_view_so_leitura_e_parametrizado(self):
         m = (ROOT / "powerquery" / "04_sem_view_somente_leitura.pq").read_text(encoding="utf-8")
