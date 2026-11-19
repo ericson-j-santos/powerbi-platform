@@ -60,6 +60,21 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         a[1]["erro_literal"] = "Invalid credentials"
         self.assertEqual(analisar(a)["estado"], "INSUFICIENTE")
 
+    def test_recurso_generico_nao_comprova_memoria(self):
+        a = cenarios()
+        a[1]["erro_literal"] = "The query has exceeded the available resources."
+        self.assertEqual(analisar(a)["estado"], "INSUFICIENTE")
+
+    def test_codigo_refresh_isolado_nao_comprova_memoria_visual(self):
+        a = cenarios()
+        a[1]["erro_literal"] = "0xC13E0003"
+        self.assertEqual(analisar(a)["estado"], "INSUFICIENTE")
+
+    def test_memoria_explicitamente_identificada(self):
+        a = cenarios()
+        a[1]["erro_literal"] = "Limite de memória excedido"
+        self.assertEqual(analisar(a)["estado"], "CANDIDATOS_PARA_READBACK")
+
     def test_correcao_com_linhas_perdidas_bloqueia(self):
         a = cenarios()
         a[2]["sql_linhas"] = "0"
