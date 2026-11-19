@@ -18,8 +18,7 @@ COLUNAS = {
     "dax_linhas", "dax_vendas", "dax_itens", "workspace_id", "modelo_id", "run_id",
 }
 ERRO_MEMORIA = re.compile(
-    r"mem[oó]ria|\bmemory\b|out.of.memory|resources? (?:has |have )?exceeded|"
-    r"exceeded (?:the )?available resources|0xC13E0003",
+    r"mem[oó]ria|\bmemory\b|out.of.memory",
     re.IGNORECASE,
 )
 
