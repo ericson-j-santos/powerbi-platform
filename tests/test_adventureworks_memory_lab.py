@@ -160,9 +160,12 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
         sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
         for campo in ("SalesOrderID", "SalesOrderDetailID", "ReplicaID",
-                      "LineTotal", "OrderQty", "CustomerID"):
+                      "LineTotal", "OrderQty"):
             self.assertIn(campo, m)
             self.assertIn(campo, sql)
+        # CustomerID só é necessário na Fato analítica, não no SELECT agregado.
+        self.assertIn("h.CustomerID AS ClienteID", m)
+        self.assertIn("JOIN Sales.SalesOrderHeader AS h", sql)
         self.assertIn('Sql.Database(', m)
         self.assertIn('"AdventureWorks2025"', m)
         self.assertIn("Value.NativeQuery(", m)
