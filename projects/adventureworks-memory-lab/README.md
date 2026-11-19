@@ -22,6 +22,12 @@ O relatório de teste usa AdventureWorksDW2022, view virtual sem armazenamento d
 ## Aceite
 A mesma quantidade de réplicas/ano no mesmo ambiente: janeiro retorna, ano base falha explicitamente por memória, B ou C retorna ano completo; SQL e DAX corrigidos são iguais e preservam totais SQL do ano base. O erro de atualização, consulta visual e gateway deve ser classificado separadamente. Verificar resultado e custo real antes de qualquer conclusão.
 
+## Critério estrito de erro de memória
+
+Uma mensagem genérica como `The visual has exceeded the available resources` não confirma, sozinha, que o limite atingido foi **memória**. Pode faltar a identificação do recurso. Para classificar o cenário anual como falta de memória, registrar a mensagem literal detalhada contendo `memory` ou `memória`, vinculada ao visual/execução. O código `0xC13E0003`, isolado, é tratado como **diagnóstico pendente**, pois pode surgir na atualização do modelo, que é um fluxo diferente. Erros de autenticação, timeout e outros limites não aprovam o teste de memória.
+
+O avaliador marca no máximo `CANDIDATOS_PARA_READBACK`; exige-se leitura independente do relatório no Service para verificar o efeito real da alteração. Referências: [limites de consultas visuais](https://learn.microsoft.com/pt-br/power-bi/create-reports/desktop-set-visual-query-limits) e [solução de problemas de atualização](https://learn.microsoft.com/pt-br/power-bi/connect-data/refresh-troubleshooting-refresh-scenarios).
+
 ## Limitações
 - A view calcula datas sintéticas: folding pode existir mesmo sem índice/seletividade na fonte. Verificar plano/IO.
 - Não há conexão com SQL/Service nesta entrega. Todos os CSVs começam em PENDENTE.
