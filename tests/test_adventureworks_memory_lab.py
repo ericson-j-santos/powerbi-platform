@@ -130,6 +130,48 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         self.assertIn("CREATE VIEW", sql)
         self.assertNotIn("DROP VIEW", sql.upper())
 
+    def test_select_sem_view_so_leitura_e_parametrizado(self):
+        m = (ROOT / "powerquery" / "04_sem_view_somente_leitura.pq").read_text(encoding="utf-8")
+        codigo = "\n".join(
+            linha for linha in m.splitlines()
+            if not linha.strip().startswith("//")
+        )
+        self.assertIn("Value.NativeQuery(", codigo)
+        self.assertIn("[QtdeReplicas = Escala]", codigo)
+        self.assertIn("[EnableFolding = true]", codigo)
+        self.assertIn("FROM dbo.FactInternetSales AS f", codigo)
+        self.assertIn("CROSS JOIN", codigo)
+        self.assertIn("r.ReplicaID < @QtdeReplicas", codigo)
+        self.assertIn("CHECKSUM(", codigo)
+        self.assertIn("20260101", codigo)
+        self.assertIn("80", codigo)
+        self.assertNotIn("Table.Buffer", codigo)
+        import re
+        self.assertNotRegex(codigo.upper(), r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b")
+
+    def test_sql_sem_view_controle_independente(self):
+        sql = (ROOT / "sql" / "05_validar_sem_view.sql").read_text(encoding="utf-8")
+        comando = "\n".join(
+            linha for linha in sql.splitlines()
+            if not linha.strip().startswith("--") and not linha.strip().startswith("/*")
+        )
+        self.assertIn("dbo.FactInternetSales", comando)
+        self.assertIn("CROSS APPLY", comando)
+        self.assertIn("LinhasJaneiro", comando)
+        self.assertIn("VendasEsperadasAno", comando)
+        self.assertIn("r.ReplicaID < @QtdeReplicas", comando)
+        self.assertIn("IF @QtdeReplicas NOT IN (1, 10, 40, 80)", comando)
+        self.assertNotIn("CREATE VIEW", comando.upper())
+        import re
+        self.assertNotRegex(comando.upper(), r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b")
+
+    def test_readme_prefere_rota_sem_ddl(self):
+        txt = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Procedimento — rota recomendada sem DDL", txt)
+        self.assertIn("sql/05_validar_sem_view.sql", txt)
+        self.assertIn("powerquery/04_sem_view_somente_leitura.pq", txt)
+        self.assertIn("folding não é garantido", txt)
+
     def test_incremental_filtro_meio_aberto(self):
         m = (ROOT / "powerquery" / "03_incremental.pq").read_text(encoding="utf-8")
         self.assertIn("[DataMovimento] >= RangeStart", m)
