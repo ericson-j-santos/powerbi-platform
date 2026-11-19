@@ -179,7 +179,7 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
         sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
         import re
-        sem_espaco = lambda texto: re.sub(r"\\s+", "", texto)
+        sem_espaco = lambda texto: re.sub(r"\s+", "", texto)
         self.assertIn("CONVERT(decimal(19,4),d.LineTotal)", sem_espaco(m))
         self.assertIn("CONVERT(decimal(19,4),d.LineTotal)", sem_espaco(sql))
 
@@ -187,8 +187,8 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         m = (ROOT / "powerquery" / "05_adventureworks2025_sem_view.pq").read_text(encoding="utf-8")
         sql = (ROOT / "sql" / "07_validar_adventureworks2025.sql").read_text(encoding="utf-8")
         import re
-        remove_comentarios = lambda texto: re.sub(r"/\\*.*?\\*/|--[^\\n]*|//[^\\n]*", "", texto, flags=re.DOTALL)
-        proibidos = re.compile(r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b", re.IGNORECASE)
+        remove_comentarios = lambda texto: re.sub(r"/\*.*?\*/|--[^\n]*|//[^\n]*", "", texto, flags=re.DOTALL)
+        proibidos = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\s+\w+\b", re.IGNORECASE)
         self.assertIsNone(proibidos.search(remove_comentarios(m)))
         self.assertIsNone(proibidos.search(remove_comentarios(sql)))
 
