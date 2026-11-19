@@ -1,0 +1,10 @@
+cenario,filtro,replicas,sql_linhas,sql_vendas,sql_itens,dax_linhas,dax_vendas,dax_itens,duracao_ms,memoria_pico_mb,erro_literal,ambiente,workspace_id,modelo_id,run_id,resultado,evidencia
+A_base,2026-01,1,,,,,,,,,,,,,,pendente,
+A_base,2026,1,,,,,,,,,,,,,,pendente,
+A_base,2026-01,10,,,,,,,,,,,,,,pendente,
+A_base,2026,10,,,,,,,,,,,,,,pendente,
+A_base,2026,40,,,,,,,,,,,,,,pendente,
+A_base,2026,80,,,,,,,,,,,,,,pendente,
+B_visual_agregado,2026,80,,,,,,,,,,,,,,pendente,
+C_modelo_estreito,2026,80,,,,,,,,,,,,,,pendente,
+D_refresh_incremental,2026,80,,,,,,,,,,,,,,pendente,
