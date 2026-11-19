@@ -13,7 +13,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 COLUNAS = {
-    "cenario", "filtro", "replicas", "resultado", "ambiente", "evidencia",
+    "cenario", "filtro", "replicas", "resultado", "ambiente", "evidencia", "origem_id",
     "erro_literal", "sql_linhas", "sql_vendas", "sql_itens",
     "dax_linhas", "dax_vendas", "dax_itens", "workspace_id", "modelo_id", "run_id",
 }
@@ -83,6 +83,14 @@ def analisar(linhas: list[dict]) -> dict:
         return {"estado": "BLOQUEADO", "motivo": "duplicidade_de_cenario", "duplicatas": len(duplicadas)}
     if not validas:
         return {"estado": "SEM_EVIDENCIA", "motivo": "nenhuma_execucao_registrada", "correcoes": []}
+
+    # Uma matriz deve corresponder a uma fonte SQL identificada.
+    # A mesma execução não pode usar baseline DW2022 e correção OLTP2025.
+    # O identificador deve ser estável, sanitizado e conferido por readback.
+    origens = {(x.get("origem_id") or "").strip().casefold() for x in validas}
+    if len(origens) != 1 or "" in origens:
+        return {"estado": "BLOQUEADO", "motivo": "origem_ausente_ou_mista",
+                "quantidade_origens": len(origens), "correcoes": []}
 
     def localizar(cenario, filtro, replicas, ambiente):
         return next((x for x in validas if x.get("cenario") == cenario
