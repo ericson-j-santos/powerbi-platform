@@ -1,0 +1,12 @@
+-- Criar as definições individualmente no Power BI Desktop.
+-- Nova tabela calculada:
+DimCalendario = CALENDAR(DATE(2026, 1, 1), DATE(2026, 12, 31))
+-- Nova coluna calculada em DimCalendario:
+AnoMes = FORMAT('DimCalendario'[Date], "yyyy-MM")
+-- Relacionamento 1:* DimCalendario[Date] -> FatoLaboratorio[DataMovimento].
+-- DataMovimento está à meia-noite; conferir tipos compatíveis.
+-- Medidas (cada linha, separadamente):
+Linhas = COUNTROWS('FatoLaboratorio')
+Vendas = SUM('FatoLaboratorio'[ValorVenda])
+Itens = SUM('FatoLaboratorio'[Quantidade])
+ValorMedioLinha = DIVIDE([Vendas], [Linhas])
