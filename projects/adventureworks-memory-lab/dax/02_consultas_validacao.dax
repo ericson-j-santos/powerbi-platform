@@ -1,0 +1,26 @@
+-- Executar cada consulta EVALUATE separadamente em DAX Query View.
+-- NÃO usar DAX Query View como prova de simulação de limites de consulta visual.
+EVALUATE
+ROW(
+    "LinhasJaneiro", CALCULATE([Linhas], DATESBETWEEN('DimCalendario'[Date], DATE(2026,1,1), DATE(2026,1,31))),
+    "LinhasAno", CALCULATE([Linhas], DATESBETWEEN('DimCalendario'[Date], DATE(2026,1,1), DATE(2026,12,31))),
+    "VendasAno", CALCULATE([Vendas], DATESBETWEEN('DimCalendario'[Date], DATE(2026,1,1), DATE(2026,12,31)))
+)
+
+-- Executar separadamente:
+EVALUATE
+SUMMARIZECOLUMNS(
+    'DimCalendario'[AnoMes],
+    "Linhas", [Linhas],
+    "Vendas", [Vendas],
+    "Itens", [Itens]
+)
+ORDER BY 'DimCalendario'[AnoMes]
+
+-- Controle negativo: sem dados de 2027 na FATO, independente do calendário:
+EVALUATE
+ROW(
+    "LinhasForaAno",
+    CALCULATE([Linhas], REMOVEFILTERS('DimCalendario'),
+              'FatoLaboratorio'[DataMovimento] >= DATE(2027,1,1))
+)
