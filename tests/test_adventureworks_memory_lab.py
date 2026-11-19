@@ -147,7 +147,7 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         self.assertIn("80", codigo)
         self.assertNotIn("Table.Buffer", codigo)
         import re
-        self.assertNotRegex(codigo.upper(), r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b")
+        self.assertNotRegex(codigo.upper(), r"\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\s+\w+\b")
 
     def test_sql_sem_view_controle_independente(self):
         sql = (ROOT / "sql" / "05_validar_sem_view.sql").read_text(encoding="utf-8")
@@ -163,7 +163,15 @@ class TesteAdventureWorksMemoria(unittest.TestCase):
         self.assertIn("IF @QtdeReplicas NOT IN (1, 10, 40, 80)", comando)
         self.assertNotIn("CREATE VIEW", comando.upper())
         import re
-        self.assertNotRegex(comando.upper(), r"\\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\\s+\\w+\\b")
+        self.assertNotRegex(comando.upper(), r"\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\s+\w+\b")
+
+    def test_detector_dml_ddl_falha_em_alteracao_de_esquema(self):
+        import re
+        proibido = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE|DELETE|INSERT|UPDATE)\s+\w+\b")
+        self.assertRegex("CREATE VIEW dbo.Tabela", proibido)
+        self.assertRegex("DELETE FROM dbo.Tabela", proibido)
+        self.assertRegex("DROP TABLE dbo.Tabela", proibido)
+        self.assertNotRegex("SELECT * FROM dbo.Tabela", proibido)
 
     def test_readme_prefere_rota_sem_ddl(self):
         txt = (ROOT / "README.md").read_text(encoding="utf-8")
