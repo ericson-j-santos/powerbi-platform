@@ -7,6 +7,22 @@ O relatório de teste usa AdventureWorksDW2022, view virtual sem armazenamento d
 
 **Custo adicional máximo R$ 0,00.** Nenhum workspace, servidor ou licença novos foram contratados. Não usar Docker. A execução em SQL Server ou Service exige autorização específica e comprovação do ambiente correto.
 
+## Alternativa OLTP AdventureWorks2025 (sem criar/restaurar banco)
+
+A [issue #27 de painel-powerbi](https://github.com/ericson-j-santos/painel-powerbi/issues/27) registra uma origem candidata `AdventureWorks2025` no Noteri, **sem prova atual** de conexão ou autorização. Ela é diferente de `AdventureWorksDW2022`, que usa a tabela `FactInternetSales`.
+
+Para usar a origem OLTP **somente após admissão física, identidade SELECT-only e custo R$ 0,00 comprovados**:
+
+1. Executar integralmente `sql/06_preflight_adventureworks2025.sql` em instância exclusivamente de laboratório. Conferir existência/visibilidade de `Sales.SalesOrderDetail` e `Sales.SalesOrderHeader`, contagem real e permissão de leitura. Se houver falha, não criar objetos para contornar.
+2. Executar `sql/07_validar_adventureworks2025.sql` com **1 réplica**; comparar linhas, itens e vendas do ano com os totais independentes da origem, e medir janeiro/2026. Aumentar para 10/40/80 somente após validar impacto e orçamento.
+3. Em um **PBIX novo**, criar o parâmetro inteiro `QtdeReplicas=1` e usar `powerquery/05_adventureworks2025_sem_view.pq` como `FatoLaboratorio`. Substituir `SERVIDOR_SQL_LAB` pelo servidor de LAB; não utilizar dados do SIIAC.
+4. Fazer o cenário **A** (tabela detalhada mensal e anual) e o **B** (visual agregado no mesmo modelo). Usar os mesmos filtros, escala e origem. **Não usar a consulta otimizada `02_otimizado.pq` nessa fonte**: ela consulta o DW2022; a variante C OLTP ainda não está versionada/validada.
+5. O campo `ValorVenda` de 2025 usa `LineTotal` arredondado por **linha** a quatro casas; não corresponde necessariamente a `SalesOrderHeader.TotalDue` ou ao total de vendas do modelo DW2022. Comparar só com a consulta SQL 07 e a mesma regra.
+
+### Identidade e comparabilidade das evidências
+
+Cada CSV de medições deve conter **uma única** `origem_id` estável e sanitizada, vinculada à instância+banco efetivos (por exemplo `aw2025-lab-a` ou `awdw2022-lab-a`). O avaliador bloqueia origem ausente ou mista; registrar a identificação real da conexão somente em evidência protegida, não no Git público. Executar A/B/C em arquivos separados por origem, sem misturar resultados. O identificador no CSV não prova autenticidade: exige leitura independente da conexão real e do workspace.
+
 ## Procedimento — rota recomendada sem DDL
 
 1. Instância SQL **exclusivamente de laboratório**: executar integralmente `sql/01_preflight.sql`. Se o estado não for `PRECONDICOES_VALIDAS`, não avançar. A conta deve ter somente `CONNECT` e `SELECT` necessários.
